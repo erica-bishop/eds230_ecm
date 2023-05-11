@@ -1,26 +1,39 @@
-ecm <- function(mod, obs){
+#' lowflowmetrics
+#'
+#' Compute the Erica-Colleen metric for range of May flows
+#' @param  mod  model estimates
+#' @param  obs  observations
+#' @param  year
+#' @param flow_months which to use default (May is default)
+#' @return ecm_metric, the square root of the normalized sum of squared errors and the pearson correlation coefficient 
+
+ecm <- function(mod, obs, year, month, flow_months=5, flow_year=1974){
   
-  #set up max and min inputs
-  max_o <- max(obs)
+  #create combined dataframe
+  flow <- cbind.data.frame(mod, obs, year, month)
   
-  max_m <- max(mod)
+  #get min and max
+  tmp = flow %>% 
+    filter(year == flow_year) %>% 
+    group_by(month) %>% 
+    dplyr::summarize(mino=min(obs), 
+                     maxo=max(obs),
+                     minm=min(mod),
+                     maxm=max(mod)) %>% 
+    filter(month == flow_months)
+  #get ranges
+  range_o <- tmp$maxo - tmp$mino
+  range_m <- tmp$maxm - tmp$minm
   
-  min_o <- min(obs)
-  
-  min_m <- min(mod)
-  
-  #correlation
-  range_o <- max_o - min_o
-  range_m <- max_m - min_m
-  
-  cor <- cor(range_o, range_m)
+  #calculate range difference
+  range_diff <- 1 - abs(range_o - range_m)
   
   #sse 
-    sse <- sum((obs - mod)^2)
+    sse <- sum(mean((obs - mod)^2))
     sse_norm <- 1 - sse
   
   #combined metric
-  ecm_metric <- sqrt(cor*sse)
+  ecm_metric <- sqrt(abs(range_diff*sse_norm))
   
   return(ecm_metric)
 }

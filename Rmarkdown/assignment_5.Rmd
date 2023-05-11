@@ -1,0 +1,97 @@
+---
+title: "Assignment 5"
+author: "Erica Bishop, Colleen McCamy"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(sensitivity)
+library(tidyverse)
+library(lubridate)
+library(reldist)
+library(purrr)
+library(ggpubr)
+```
+```{r data}
+
+#model output data
+msage <- read.table("../Data/sagerm.txt", header=T)
+
+#initial observed data
+sager <- read.table("../Data/sager.txt", header=T)
+
+```
+
+
+```{r source function}
+#our combined metric calculation function
+source("../R/combined_metric.R")
+
+```
+
+```{r data wrangle}
+
+#rename columns in df to number of times to run iterations
+nsim <- ncol(msage)
+snames <- sprintf("S%d", seq(from = 1, to = nsim))
+colnames(msage) <- snames
+
+#add dates to observed
+sager <- sager %>% 
+  mutate(date = paste(day,month,year, sep="/"))
+
+sager$date = as.Date(sager$date,"%d/%m/%Y")
+
+#add date columns from previous data
+msage$date <- sager$date
+msage$month <- sager$month
+msage$year <- sager$year
+msage$day <- sager$day
+msage$wy <- sager$wy
+
+
+#join our observations to model predictions by date
+msage <- left_join(msage, sager[,c("obs","date")], by = "date") %>% 
+  na.omit()
+
+
+```
+
+```{r run function for 1974}
+
+#remove uneccesary columns from df
+mod <- msage %>% 
+  select(-date, -day, -wy, -obs, -year, -month)
+
+#1974 is default in function but can be changed 
+results <- mod %>% 
+  map_df(ecm,
+         obs = msage$obs,
+         year = msage$year,
+         month = msage$month)
+
+```
+
+
+```{r best metric}
+
+best_metric <- results[which.max(results)]
+#S10 was our best metric!!
+
+worst_metric <- results[which.min(results)]
+#S29 was our worst metric!!
+
+
+```
+
+```{r plot}
+
+
+
+```
+
