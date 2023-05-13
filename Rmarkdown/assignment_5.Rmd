@@ -62,6 +62,7 @@ msage <- left_join(msage, sager[,c("obs","date")], by = "date") %>%
 
 ```
 
+Our calibraton period is May of 1974 - so those are the default dates in the function. However you can input other times. 
 ```{r run function for 1974}
 
 #remove uneccesary columns from df
@@ -77,7 +78,6 @@ results <- mod %>%
 
 ```
 
-
 ```{r best metric}
 
 best_metric <- results[which.max(results)]
@@ -89,9 +89,51 @@ worst_metric <- results[which.min(results)]
 
 ```
 
-```{r plot}
+
+```{r summary plot}
+#plot metrics from models
+results_longer <- results %>% pivot_longer(everything(), names_to = c("model")) %>% 
+  rename(ecm = value)
+
+#summary of performance
+
+summaryPlot <- ggplot(
+  data = results_longer
+) +
+  geom_histogram(aes(
+    x = ecm,
+    fill = "#EF476F"
+  )) +
+  labs(title = "Distribution of ECM metrics over models for May 1974") +
+  theme_minimal()
+
+summaryPlot
+
+
+```
+
+```{r uncertainty ranges}
+
+#show best and worst model performances and the uncertainty 
+msage_best_worst <- msage %>% 
+  select("S29", "S10") %>% 
+  mutate(difference = S10-S29) %>%
+  pivot_longer(everything(),
+               names_to = "model") %>% 
+  rename(ecm = value)
+
+
+ggplot(
+  data = msage_best_worst,
+  aes(x = model,
+      y = ecm,
+      color = model)
+) +
+  geom_boxplot()
 
 
 
 ```
 
+
+##Discussion 
