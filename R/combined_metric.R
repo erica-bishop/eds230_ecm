@@ -3,7 +3,9 @@
 #' Compute the Erica-Colleen metric for range of May flows
 #' @param  mod  model estimates
 #' @param  obs  observations
-#' @param  year
+#' @param year years of observed and modeled data (from dataframe)
+#' @param month months of observed and modeled data (from dataframe)
+#' @param  flow_year year of interest (default is our calibration year, 1974)
 #' @param flow_months which to use default (May is default)
 #' @return ecm_metric, the square root of the normalized sum of squared errors and the pearson correlation coefficient 
 
@@ -12,7 +14,7 @@ ecm <- function(mod, obs, year, month, flow_months=5, flow_year=1974){
   #create combined dataframe
   flow <- cbind.data.frame(mod, obs, year, month)
   
-  #get min and max
+  #get min and max for year of interest
   tmp = flow %>% 
     filter(year == flow_year) %>% 
     group_by(month) %>% 

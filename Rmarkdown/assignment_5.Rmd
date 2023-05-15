@@ -80,11 +80,11 @@ results <- mod %>%
 
 ```{r best metric}
 
-best_metric <- results[which.max(results)]
-#S10 was our best metric!!
+worst_metric <- results[which.max(results)]
+#S10 was our worst metric!!
 
-worst_metric <- results[which.min(results)]
-#S29 was our worst metric!!
+best_metric <- results[which.min(results)]
+#S29 was our best metric!!
 
 
 ```
@@ -104,8 +104,13 @@ summaryPlot <- ggplot(
     x = ecm,
     fill = "#EF476F"
   )) +
-  labs(title = "Distribution of ECM metrics over models for May 1974") +
-  theme_minimal()
+  labs(title = "Distribution of ECM scores over models for May 1974",
+       subtitle = "The ecm assesses a model's SSE multiplied by the difference in ranges for the month of May") +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
+  )
 
 summaryPlot
 
@@ -129,7 +134,60 @@ ggplot(
       y = ecm,
       color = model)
 ) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(
+    title = "ECM scores from the best and worst models and the difference between them",
+    caption = "There is less variation in ECM scores for our best-performing model (S29)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.caption = element_text(hjust = 0.5),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+
+```
+
+```{r best model}
+
+#plot the range of May stream flows for the best model and the observed data
+
+compare_df <- msage %>% 
+  select("month",
+         "year",
+         "obs",
+         "S10",
+         "S29") %>% 
+  filter(month == 5) %>% 
+  group_by(year) %>% 
+  summarise(S10 = max(S10) - min(S10),
+            S29 = max(S29) - min(S29),
+            observed = max(obs) - min(obs)) %>% 
+  pivot_longer(cols = c(S10, S29, observed),
+               names_to = "model") %>% 
+  rename(may_flow_range = value)
+
+ggplot(
+  data = compare_df,
+  aes(x = year,
+      y = may_flow_range,
+      col = model)
+) +
+  geom_line() +
+  labs(
+    title = "Post-calibration model assessment",
+    x = "Year",
+    y = "May streamflow range",
+    subtitle = "Best (S29) and worst (S10) performing models compared to observed streamflows"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+
 
 
 
@@ -137,3 +195,10 @@ ggplot(
 
 
 ##Discussion 
+
+The ECM (Erica-Colleen Metric) score assess a model's accuracy overall by computing the normalized sum of squared errors (1 - SSE) as well as its accuracy specific to computing streamflows during the high-variability month of May. The ECM computes the difference in the modeled v. observed range in streamflows over the entire month of May, and multiplies that by the normalized SSE. The ECM is given as the square root of the absolute value of that product so it is always a positive value - the smaller the ECM the better the model performance in this case. 
+
+We were specifically interested in honing in on the stream flow models for the month of may because there can be a very wide range of streamflows during the Spring between high and low precipitation years. As you can see in the plot above, after calibrating our model with the year 1974, we were able to much more accurately predict the range of streamflows for the month of may across the years available in our data. The graph above also shows our worst-performing model (S10) to visualize the improvement that calibration makes with model selection. 
+
+
+
